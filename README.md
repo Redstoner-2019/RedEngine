@@ -1,5 +1,5 @@
 # **Game Pipeline**
-Pipeline Version: 1.0\
+Pipeline Version: 0.1-alpha-1\
 Dokumentation Stand: 26.10.2023 12:00
 ## 1 Getting started
 ### 1.1 Die JAR installieren
