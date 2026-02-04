@@ -1,268 +1,238 @@
-# **Game Pipeline**
-Pipeline Version: 0.1-alpha-1\
-Dokumentation Stand: 26.10.2023 12:00
-## 1 Getting started
-### 1.1 Die JAR installieren
-Hier erkläre ich kurz wie die .jar in das Projekt in IntelliJ eingebunden werden kann.
-1. Lade die neuste Version der Engine von https://github.com/Redstoner-2019/RedEngine/releases herunter.
-2. Nach dem Download öffne IntelliJ und gehe über ```File > Project Structure``` in die Projekteinstellungen.
-3. Klicke jetzt auf ``Libraries`` und dann auf das kleine ``+`` oben links.
-4. Klicke jetzt auf ``Java`` und wähle die ``.jar`` Datei aus.
-5. Klicke jetzt noch einmal auf ``Ok`` und das Setup ist Fertig!
-### 1.2 Ein Fenster Erstellen
+# RedEngine
 
-Um ein Fenster zu erstellen muss nur ein Camera Objekt erstellt und mit ```.start()``` gestartet werden.
-Daraufhin wird sich ein Fenster mit der Größe des Monitors öffnen.
+A modern, feature-rich 3D rendering engine for Java built on LWJGL 3 and OpenGL.
 
-Ein Beispiel:
-```java 
-Camera camera = new Camera(new ArrayList<>());
-camera.start();
+## Features
+
+- **PBR Rendering** - Physically Based Rendering with metallic-roughness workflow
+- **Dynamic Lighting** - Directional, point, and spot lights with shadow mapping
+- **Post-Processing** - HDR, bloom, tone mapping (Reinhard, ACES, Uncharted2)
+- **MSAA Anti-Aliasing** - Configurable 2x, 4x, 8x, 16x multisampling
+- **Physics System** - Rigid body dynamics powered by ODE4J
+- **Text Rendering** - 2D screen-space and 3D billboard text with SDF support
+- **Model Loading** - GLB/GLTF with skeletal animations, OBJ/MTL support
+- **Material System** - Pre-built metals, plastics, glass, and emissive materials
+- **ImGui Integration** - Built-in debug UI and settings panels
+- **Cross-Platform** - Windows, Linux, and macOS support
+
+## Requirements
+
+- Java 17 or higher
+- OpenGL 3.3+ compatible GPU
+
+## Installation
+
+### Maven
+
+**Platform-specific JAR with bundled natives (Recommended)**
+
+```xml
+<!-- Windows x64 -->
+<dependency>
+    <groupId>io.redstonerdev</groupId>
+    <artifactId>RedEngine</artifactId>
+    <version>0.6.0</version>
+    <classifier>windows-x64</classifier>
+</dependency>
+
+<!-- Linux x64 -->
+<dependency>
+    <groupId>io.redstonerdev</groupId>
+    <artifactId>RedEngine</artifactId>
+    <version>0.6.0</version>
+    <classifier>linux-x64</classifier>
+</dependency>
+
+<!-- macOS x64 -->
+<dependency>
+    <groupId>io.redstonerdev</groupId>
+    <artifactId>RedEngine</artifactId>
+    <version>0.6.0</version>
+    <classifier>macos-x64</classifier>
+</dependency>
 ```
-Wie man bereits sieht wird bei der Erstellung des Camera-Objekts eine Liste mit übergeben. Diese Liste ist eine Liste des Typs ```String```.
-Diese Liste sind die Texturen die direkt nach dem Start des Fensters geladen werden. Wenn als Beispiel
-```java 
-Camera camera = new Camera(Arrays.asList("grass.png"));
+
+**Core library only (provide your own natives)**
+
+```xml
+<dependency>
+    <groupId>io.redstonerdev</groupId>
+    <artifactId>RedEngine</artifactId>
+    <version>0.6.0</version>
+</dependency>
 ```
-verwendet wird, dann wird die Textur ```grass.png``` in dem Ordner ```resources/textures/``` geladen. \
 
-**WICHTIG!**
-
-Texturen müssen ZWINGEND im PNG format sein, ansonsten können diese nicht geladen werden!
-
-Es ist allerdings auch möglich einfach eine leere Liste zu übergeben (Nicht null!), dabei werden dann keine Texturen direkt geladen.\
-Wenn man den obrigen Code so ausführt gibt es aktuell jetzt noch das Problem dass das Fenster einfach Weiß ist und es die Meldung ```Keine Rückmeldung!``` gibt. Dafür muss eine Render-loop
-erstellt werden. Dies ist einfach zu tun.\
-
-Dafür können wir einfach
-```java
-List<GameObjectData> objects = new ArrayList<>();
-List<Shader> shaders = new ArrayList<>();
-
-while (!camera.shouldWindowClose()) {
-    camera.render(objects, shaders);
-}
-```
-verwenden. Was tut dieser Code jetzt allerdings?\
-Zunächst werden 2 Listen erstellt. Eine Liste vom Typ ``GameObjectData`` und eine Liste vom Typ ``Shader``.
-Die Namen dieser Listen sind irrelevant, es sind nur die Datentypen wichtig. In diesem Fall in der ``objects``-Liste werden
-die Objekte welche Gerendert werden sollen an die Kamera übergeben und gerendert. Hierbei ist zu beachten, dass das erste Element der Liste als erstes gerendert wird
-und somit von später gerenderten Objekten überlagert werden kann!\
-Dieser Code reicht jetzt aber erst einmal aus um ein Fenster zu erzeugen.
-
-### 1.3 Das Fenster einstellen
-
-Als nächtes kommen wir zu nützlichen Dingen die man an dem Fenster einstellen kann.
-
-Zuallererst wollen wir uns die Framerate (Also FPS) im Fenstertitel anzeigen lassen. Das ändern des Fenstertitels ist
-mit dem folgenden Code einfach getan:
-
-```java
-camera.setTitle("Hello World!");
-```
-Wenn wir diesen Code in die ```while```-schleife einfügen wird sich der Fenstertitel auf ``Hello World!`` ändern.
-Wir wollen aber die Bildrate anzeigen lassen. Dafür können wir die Methode ```camera.getFps() ``` verwenden. Wenn wir jetzt den Code auf z.B.
-```java
-camera.setTitle(camera.getFps() + " FPS");
-```
-ändern wird uns jetzt im Fenstertitel die Bildrate angezeigt!
-
-Der Komplette Code bisher sollte nun etwa so aussehen:
+## Quick Start
 
 ```java
-public static void main(String[] args){
-    Camera camera = new Camera(new ArrayList<>());
-    camera.start();
-    
-    List<GameObjectData> objects = new ArrayList<>();
-    List<Shader> shaders = new ArrayList<>();
-    
-    while (!camera.shouldWindowClose()) {
-        camera.render(objects, shaders);
-        camera.setTitle(camera.getFps() + " FPS");
+import io.redstonerdev.graphics.RenderI;
+import io.redstonerdev.graphics.font.TextRenderer;
+import io.redstonerdev.graphics.render.Renderer;
+import io.redstonerdev.gui.window.Window;
+import io.redstonerdev.threed.lighting.Light;
+import io.redstonerdev.threed.model.Material;
+import io.redstonerdev.threed.model.Model;
+import io.redstonerdev.threed.model.Shapes;
+import io.redstonerdev.threed.render.Camera;
+import io.redstonerdev.threed.render.Renderer3D;
+import org.joml.Vector3f;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MyGame extends Window {
+
+    private List<Model> models = new ArrayList<>();
+
+    public MyGame() throws Exception {
+        super(0, 0, 1280, 720);
+        setTitle("My Game");
+
+        // Create a simple scene using Shapes class
+        Model ground = new Model(
+            Shapes.createPlaneMesh(20),
+            Material.createPlastic(new Vector3f(0.3f), 0.8f)
+        );
+        models.add(ground);
+
+        Model cube = new Model(
+            Shapes.createCubeMesh(),
+            Material.createGold()
+        );
+        cube.setPosition(new Vector3f(0, 0.5f, -5));
+        models.add(cube);
+
+        // Add lighting using factory methods
+        Light sun = Light.createDirectional(
+            new Vector3f(1, -2, 1),
+            new Vector3f(1, 1, 1),
+            1.0f
+        );
+        Renderer3D.getInstance().addLight(sun);
+
+        // Setup camera
+        Camera.getInstance().setPosition(new Vector3f(0, 2, 5));
+
+        // Add renderer
+        addRenderer((renderer, renderer3D, textRenderer) -> {
+            renderer3D.renderModels(models);
+            textRenderer.renderText(
+                getFps() + " FPS", 10, 10, 24, Color.WHITE,
+                renderer.getWidth(), renderer.getHeight()
+            );
+        });
+
+        loop();
+    }
+
+    public static void main(String[] args) throws Exception {
+        new MyGame();
     }
 }
 ```
 
-### 1.4 Rendern von Texturen
-Allerdings ist ein schwarzer Bildschirm nicht sonderlich interessant. Daher kommen
-wir jetzt zum wichtigen Thema, wie kann man Texturen auf den Bildschirm rendern?\
-Dafür muss die Textur zunächst geladen werden. Dafür kann man einfach ein neues Texture Objekt
-erzeugen. Dazu muss eine URL angegeben werden wo sich das Objekt befindet. Dort kann man z.B. wie in diesem Beispiel
-mit ```Resources.getResource("textures/texture.png")``` eine URL zu der Textur Datei erzeugt werden, welche sich in diesem
-Fall im ```resources/textures/``` Ordner befindet. Diese URL kann an das Objekt weitergegeben werden.
-Der Code dafür sieht folgendermaßen aus:
-```java
-Texture texture = new Texture(Resources.getResource("textures/skyTexture.png"));
-```
-Diese Textur kann nun der Kamera zugewiesen werden, damit die Kamera weiß wo sich die Textur befindet:
-```java
-Texture texture = new Texture(Resources.getResource("textures/skyTexture.png"));
-camera.addTexture(texture,"sky");
-```
-Das zweite Argument in diesem Fall ist der "Pfad" an dem sich die Textur befindet. Dieser muss
-in einem GameObject angegeben werden damit die Kamera weiß welche Textur auf das GameObject angewendet werden soll.\
-Ein GameObject kann folgendermaßen erzeugt werden:
-```java
-GameObject object = new GameObject(new Vector2(0, 0),"sky");
-```
-In diesem Fall sehen wir direkt, dass wir 2 Argumente für das GameObject beötigen.
-Das erste ist die Position des GameObjects. Dieses wird als Vector2 angegeben, in diesem Fall befindet sich das Object bei 0 / 0.\
-Das zweite Argument ist die Textur des Objekts. Diese kann Nachträglich noch geändert werden, muss aber vorher der Kamera als referenz wie im vorherigen Schritt zugewiesen werden!
-Dieses sollte VOR der while-schleife erzeugt werden und der ``objects``-Liste von vorhin hinzugefügt werden.
-Wenn wir dies nun tun wird dieses Objekt auf dem Bildschirm erscheinen.
+## Core Components
 
-Der volle Code sieht nun so aus:
+| Component | Description |
+|-----------|-------------|
+| `Window` | Base application class with game loop |
+| `Renderer3D` | 3D rendering, lighting, and shadows |
+| `Camera` | View and projection management |
+| `Model` | 3D objects with transforms and materials |
+| `Shapes` | Procedural mesh generation (cube, sphere, plane, cylinder) |
+| `Material` | PBR material system |
+| `Light` | Directional, point, and spot lights (use factory methods) |
+| `TextRenderer` | 2D and 3D text rendering |
+| `PhysicsWorld` | Rigid body physics simulation |
+| `RenderSettings` | Global quality and rendering options |
+| `PostProcessing` | Bloom, tone mapping, MSAA |
+
+## Material Examples
 
 ```java
-public static void main(String[] args){
-    Camera camera = new Camera(new ArrayList<>());
-    camera.start();
+// Metals
+Material gold = Material.createGold();
+Material steel = Material.createBrushedSteel();
 
-    Texture texture = new Texture(Resources.getResource("textures/skyTexture.png"));
-    camera.addTexture(texture,"sky");
+// Custom metallic
+Material chrome = Material.createMetallic(
+    new Vector3f(0.9f), 1.0f, 0.1f
+);
 
-    GameObject object = new GameObject(new Vector2(0, 0),"sky");
+// Emissive (glowing)
+Material neon = Material.createEmissive(
+    new Vector3f(1, 0, 0), 5.0f  // intensity > 1 triggers bloom
+);
 
-    List<GameObjectData> objects = new ArrayList<>();
-    List<Shader> shaders = new ArrayList<>();
-
-    objects.add(object);
-
-    while (!camera.shouldWindowClose()) {
-        camera.render(objects, shaders);
-        camera.setTitle(camera.getFps() + " FPS");
-    }
-}
+// Glass
+Material glass = Material.createGlass(
+    new Vector3f(1, 1, 1), 0.2f
+);
 ```
 
-## 2 Input
-### 2.1 Keyboard Listener
-Um Tastatureingaben auszulesen muss lediglich ein KeyboardListener erstellt werden.
+## Physics Example
+
 ```java
-KeyboadListener keyboadListener = new KeyboadListener(camera);
-```
-Dieser muss bei der Erzeugung der Kamera zugewiesen werden.
+import io.redstonerdev.threed.physics.*;
 
-Jetzt kann innerhalb der Gameloop mithilfe von z.B.
-```java
-if(keyboadListener.isKeyDown(GLFW.GLFW_KEY_W)){
-    System.out.println("Hello World!");
-}
-```
-``Hello World!`` ausgeben, SOLANGE die Taste ``W`` gedrückt ist.
+PhysicsWorld world = PhysicsWorld.getInstance();
+world.setGravity(new Vector3f(0, -9.81f, 0));
 
-Hier gibt es allerdings unterschiede in den Funktionen des Listeners.
+// Create dynamic sphere
+SphereCollider shape = new SphereCollider(0.5f);
+PhysicsBody ball = world.createDynamicBody(shape, 1.0f);
+ball.setPosition(new Vector3f(0, 10, 0));
+ball.setRestitution(0.7f);
 
-_isKeyDown()_
+// Create static ground
+PhysicsBody ground = world.createGroundPlane(0);
 
-Diese Methode prüft ob die Taste AKTUELL gedrückt ist.
-
-_isKeyPressed()_
-
-Diese Methode prüft ob die Taste gedrückt wurde. Sie gibt nur 1 Mal ``true`` zurück bis die Taste erneut gedrückt wird.
-
-_isKeyReleased()_
-
-Das gleiche wie bei ``isKeyPressed()``, allerdings beim loslassen der Taste.
-
-### 2.2 Mouse Listener
-
-Der MouseListener kann die Position des Mauszeigers abrufen. Der MouseListener kann **NICHT** prüfen ob eine Maustaste gedrückt ist, dafür wird ein MouseButtonListener benötigt.
-
-Ein MouseListener kann folgendermaßen erzeugt werden:
-```java
-MouseListener mouseListener = new MouseListener(camera);
+// In update loop
+world.update(deltaTime * 0.02f);
+model.setPosition(ball.getPosition());
+model.setRotation(ball.getRotationEuler());
 ```
 
-Jezt kann man mithilfe der Methode ``.getLocation()`` kann jetzt ein ``Vector2`` von der Position des Mauszeigers
-erhalten werden.
+## Render Settings
 
-### 2.3 Mouse Button Listener
-Mit einem Mosuse Button Listener kann man auf interaktion von Tasten auf der Maus Prüfen.
-Er kann folgendermaßen erzeugt werden:
 ```java
-MouseButtonListener mouseButtonListener = new MouseButtonListener(camera);
-```
-Dieser listener hat die Methode ``isKeyDown()``, diese gibt ``true`` zurück, solange die Taste gedrückt ist.
+RenderSettings settings = RenderSettings.getInstance();
 
-## 3 Setup der Kamera
-**Wichtig!** Die folgenden Methoden können erst vewendet werden nachdem die Kamera mit
-```java
-camera.start();
-```
-initialisiert wurde!
-### 3.1 VSync
-VSync ist standardmäßig bei der Erzeugung der Kamera aktiviert. Um es zu deaktiveren, bzw. später wieder zu aktivieren kann
-```java
-camera.setVsync(true);
-```
-bzw.
-```java
-camera.setVsync(false);
-```
-verwendet werden.
-### 3.2 Position
-Die Position der Kamera kann mit folgenden Funktionen gesetzt bzw. abgefragt werden:
-```java
-camera.setCameraPositon(new Vector2(0, 0));
-camera.getCameraPositon(); //Gibt einen Vektor2 zurück
-```
-### 3.3 Mouse Enabled
-Um die Maus auf den Frame nicht anzuzeigen kann
-```java
-camera.setMouseEnabled();
-```
-verwendet werden.
-### 3.4 Titel
-Um den Titel des Frames zu bearbeiten kann
-```java
-camera.setTitle("Hello World!");
-```
-verwendet werden.
-### 3.5 Texturliste
-Um die Texturliste nachträglich zu setzen kann
-```java
-camera.setTextureList();
-camera.getTextureList(); //GIbt die aktuelle Liste zurück
-```
-verwendet werden. Diese Methode nimmt eine ``HashMap<String,Texture>``.
-### 3.6 Fullscreen
-Um den Vollbildmodus zu wechseln kann
-```java
-camera.toggleFullscreen();
-```
-verwendet werden.
-### 3.7 Größe
-Um die größe des Fensters abzufragen können die Methoden
-```java
-camera.getWidth();
-camera.getHeight();
-```
-verwendet werden.
-### 3.8 Fenster ID
-Die Methode 
-```java
-camera.getWindow();
-```
-gibt die LWJGL windowID zurück. Diese ist in fortgeschritteneren Anwendungen wichtig.
-### 3.9 Delta Time
-Mit
-```java
-camera.getDeltaTime();
-```
-kann die aktuelle deltaTime abgefragt werden. Diese ist wichtig, dass z.B. Bewegungen bei unterschiedlichen Bildraten gleich sind.
-### 3.10 FPS
-Um die aktuelle Bildate abzufragen kann
-```java
-camera.getFps();
-```
-verwendet werden.
-### 3.11 Anzahl gerenderte Objekte
-Die aktuelle Anzahl der gerenderten Objekte kann mit
-```java
-camera.getObjectsOnScreen();
-```
-abgefragt werden.
+// Apply quality preset
+settings.applyPreset(RenderSettings.QualityPreset.HIGH);
 
+// Enable effects
+settings.setBloomEnabled(true);
+settings.setBloomIntensity(1.0f);
+settings.setToneMapping(true);
+settings.setToneMappingOperator(RenderSettings.ToneMappingOperator.ACES);
 
+// MSAA
+settings.setAntiAliasing(RenderSettings.AntiAliasing.MSAA_4X);
+```
+
+## Documentation
+
+For comprehensive documentation including:
+- Detailed API usage
+- Lighting and shadow configuration
+- Camera controls and input handling
+- Physics system guide
+- Post-processing effects
+- ImGui integration
+- Model loading and animations
+
+See the [Engine Guide](docs/ENGINE_GUIDE.md).
+
+## Dependencies
+
+- [LWJGL 3](https://www.lwjgl.org/) - OpenGL, GLFW, STB, OpenAL bindings
+- [JOML](https://github.com/JOML-CI/JOML) - Java OpenGL Math Library
+- [ImGui-Java](https://github.com/SpaiR/imgui-java) - Immediate mode GUI
+- [ODE4J](https://github.com/tzaeschke/ode4j) - Open Dynamics Engine for Java
+- [jglTF](https://github.com/javagl/JglTF) - GLTF model loading
+
+## License
+
+See [LICENSE](LICENSE) for details.
