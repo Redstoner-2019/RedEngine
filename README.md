@@ -223,7 +223,7 @@ For comprehensive documentation including:
 - ImGui integration
 - Model loading and animations
 
-See the [Engine Guide](docs/ENGINE_GUIDE.md).
+See the [Engine Guide](ENGINE_GUIDE.md).
 
 ## Dependencies
 
@@ -233,6 +233,3 @@ See the [Engine Guide](docs/ENGINE_GUIDE.md).
 - [ODE4J](https://github.com/tzaeschke/ode4j) - Open Dynamics Engine for Java
 - [jglTF](https://github.com/javagl/JglTF) - GLTF model loading
 
-## License
-
-See [LICENSE](LICENSE) for details.
